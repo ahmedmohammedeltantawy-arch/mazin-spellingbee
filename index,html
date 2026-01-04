@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mazin's Command Center 🚀</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;  /* Tech Blue */
+            --accent-hover: #2980b9;
+            --def-color: #f1c40f; /* Yellow for definition */
+            --bg-color: #ecf0f1;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --success: #27ae60;
+            --error: #c0392b;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            border-top: 6px solid var(--accent);
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        h1 { margin-bottom: 0.5rem; color: var(--primary); letter-spacing: 1px;}
+        h2 { font-size: 1.2rem; color: #7f8c8d; font-weight: normal; margin-top: 0; }
+
+        /* PROGRESS BLOCKS */
+        .progress-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 20px;
+            min-height: 20px;
+        }
+        
+        .prog-block {
+            width: 12px;
+            height: 12px;
+            background-color: #ddd;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+        .prog-block.correct { background-color: var(--success); }
+        .prog-block.wrong { background-color: var(--error); }
+        .prog-block.active { border: 1px solid #666; transform: scale(1.4); background-color: var(--accent); }
+
+        /* INPUTS & BUTTONS */
+        select {
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #bdc3c7;
+            margin: 20px 0;
+            width: 100%;
+            background: #fff;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.4rem;
+            margin: 20px 0;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            text-align: center;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--accent); }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: 600;
+            flex: 1;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        
+        .btn-def { 
+            background-color: var(--def-color); 
+            color: #333; 
+            flex: 0 0 auto; /* Don't stretch too much */
+        }
+        .btn-def:hover { background-color: #f39c12; }
+
+        .btn-retry { background-color: var(--error); }
+        .btn-retry:hover { background-color: #a93226; }
+
+        .hidden { display: none !important; }
+
+        /* RESULTS */
+        .result-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-top: 20px;
+            max-height: 250px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
+        }
+        .result-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .badge { font-size: 0.8rem; background: #eee; padding: 2px 6px; border-radius: 4px; color: #666; }
+        
+        #mode-indicator {
+            background: #2c3e50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen">
+        <h1>Mazin's Command Center</h1>
+        <h2>Spelling Bee Training Module</h2>
+        
+        <label style="display:block; text-align:left; font-weight:bold; color:#7f8c8d; margin-top:20px;">Select Difficulty:</label>
+        <select id="grade-select">
+            <option value="5">Grade 5</option>
+            <option value="6">Grade 6</option>
+            <option value="7">Grade 7</option>
+            <option value="8">Grade 8</option>
+            <option value="all" selected>All Grades (Mix)</option>
+        </select>
+
+        <label style="display:block; text-align:left; font-weight:bold; color:#7f8c8d;">Session Size:</label>
+        <select id="count-select">
+            <option value="10">10 Words (Quick Warmup)</option>
+            <option value="25" selected>25 Words (Standard)</option>
+            <option value="50">50 Words (Intense)</option>
+        </select>
+        
+        <button class="btn" onclick="startGame(false)" style="width:100%; margin-top:10px;">Initialize Session</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div id="mode-label" class="hidden" style="text-align:center;">
+            <span id="mode-indicator">⚠ DRILL MODE: 3x Repetition</span>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#7f8c8d; margin-bottom:10px;">
+            <span>Word <strong id="current-count">1</strong></span>
+            <span id="grade-badge" class="badge">Grade 8</span>
+        </div>
+
+        <div id="progress-grid" class="progress-grid"></div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="speakCurrentWord()">🔊 Listen</button>
+            <button class="btn btn-def" onclick="fetchAndSpeakDefinition()">💡 Define</button>
+        </div>
+
+        <div id="status-msg" style="height:20px; font-size:0.9rem; color:#7f8c8d; margin-bottom:5px;"></div>
+
+        <input type="text" id="user-input" placeholder="Type word here..." autocomplete="off">
+        <br>
+        <button class="btn" onclick="submitWord()" style="width:100%">Submit Answer</button>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h1>Session Complete</h1>
+        <p style="font-size:1.2rem;">Score: <strong id="final-score">0</strong> / <span id="final-total">0</span></p>
+        
+        <div id="mistake-area" class="hidden">
+            <button class="btn btn-retry" onclick="startReviewMode()" style="width:100%; margin-bottom:20px;">⚠ Practice Mistakes (3x Drill)</button>
+            <h3 style="text-align:left;">Review List:</h3>
+            <ul id="mistake-list" class="result-list"></ul>
+        </div>
+
+        <div id="perfect-message" class="hidden" style="color:var(--success); font-weight:bold; margin:20px 0;">
+            Excellent work. 100% Accuracy.
+        </div>
+        
+        <button class="btn" onclick="resetGame()" style="margin-top:20px; background:#95a5a6;">Main Menu</button>
+    </div>
+</div>
+
+<script>
+    // --- DATABASE (Grades 5, 6, 7, 8) ---
+    //
+    const WORD_DATA = [
+        // Grade 5
+        {w:"confident",g:5},{w:"vision",g:5},{w:"diamond",g:5},{w:"stitchery",g:5},{w:"fiddlehead",g:5},
+        {w:"hobbit",g:5},{w:"doughnut",g:5},{w:"precious",g:5},{w:"wafting",g:5},{w:"occupy",g:5},
+        {w:"Afrobeat",g:5},{w:"termite",g:5},{w:"insulation",g:5},{w:"intertwine",g:5},{w:"recital",g:5},
+        {w:"furniture",g:5},{w:"ambush",g:5},{w:"squire",g:5},{w:"submerged",g:5},{w:"saucer",g:5},
+        {w:"gloaming",g:5},{w:"engulf",g:5},{w:"graduate",g:5},{w:"fascinated",g:5},{w:"composition",g:5},
+        {w:"wisdom",g:5},{w:"ourselves",g:5},{w:"invisible",g:5},{w:"completely",g:5},{w:"poisonous",g:5},
+        {w:"intimidate",g:5},{w:"drawers",g:5},{w:"disdain",g:5},{w:"deliberately",g:5},{w:"spacious",g:5},
+        {w:"forearms",g:5},{w:"gratitude",g:5},{w:"appreciation",g:5},{w:"devotion",g:5},{w:"inscription",g:5},
+        {w:"inventory",g:5},{w:"wheezy",g:5},{w:"possible",g:5},{w:"replace",g:5},{w:"crookedly",g:5},
+        {w:"fragrant",g:5},{w:"fowl",g:5},{w:"responsible",g:5},{w:"awfully",g:5},{w:"manual",g:5},
+        // Grade 6
+        {w:"thorax",g:6},{w:"tostones",g:6},{w:"bunions",g:6},{w:"bamboozled",g:6},{w:"Oman",g:6},
+        {w:"flummox",g:6},{w:"inscrutable",g:6},{w:"serenity",g:6},{w:"congregation",g:6},{w:"sentinel",g:6},
+        {w:"Arctic",g:6},{w:"fluke",g:6},{w:"captain",g:6},{w:"delegation",g:6},{w:"verve",g:6},
+        {w:"Vaseline",g:6},{w:"gastritis",g:6},{w:"platypus",g:6},{w:"salute",g:6},{w:"mantel",g:6},
+        {w:"amphitheater",g:6},{w:"desecration",g:6},{w:"diode",g:6},{w:"mischievous",g:6},{w:"bionic",g:6},
+        {w:"syllables",g:6},{w:"sultanate",g:6},{w:"turban",g:6},{w:"sausage",g:6},{w:"disgruntled",g:6},
+        {w:"terrify",g:6},{w:"quip",g:6},{w:"information",g:6},{w:"incubator",g:6},{w:"droll",g:6},
+        {w:"vultures",g:6},{w:"Arabic",g:6},{w:"Brooklyn",g:6},{w:"sacred",g:6},{w:"reindeer",g:6},
+        {w:"disclaimer",g:6},{w:"quotation",g:6},{w:"superior",g:6},{w:"privilege",g:6},{w:"fallow",g:6},
+        {w:"replica",g:6},{w:"provision",g:6},{w:"reference",g:6},{w:"havens",g:6},{w:"voracious",g:6},
+        // Grade 7
+        {w:"tripe",g:7},{w:"slakes",g:7},{w:"Illinois",g:7},{w:"commandments",g:7},{w:"contagion",g:7},
+        {w:"decibels",g:7},{w:"repose",g:7},{w:"nondescript",g:7},{w:"expulsion",g:7},{w:"laundromat",g:7},
+        {w:"pervading",g:7},{w:"malnutrition",g:7},{w:"tunic",g:7},{w:"extravagant",g:7},{w:"innards",g:7},
+        {w:"acclimate",g:7},{w:"recede",g:7},{w:"indignant",g:7},{w:"wok",g:7},{w:"categorically",g:7},
+        {w:"demure",g:7},{w:"chasm",g:7},{w:"hitherto",g:7},{w:"horticulture",g:7},{w:"magistrates",g:7},
+        {w:"sprocket",g:7},{w:"punctually",g:7},{w:"dynasty",g:7},{w:"koi",g:7},{w:"incense",g:7},
+        {w:"incited",g:7},{w:"deficiencies",g:7},{w:"incarnated",g:7},{w:"pews",g:7},{w:"malicious",g:7},
+        {w:"interstellar",g:7},{w:"petticoat",g:7},{w:"insufferable",g:7},{w:"spawned",g:7},{w:"gorilla",g:7},
+        {w:"quarry",g:7},{w:"kung fu",g:7},{w:"steeds",g:7},{w:"destitution",g:7},{w:"patronise",g:7},
+        {w:"dilute",g:7},{w:"societal",g:7},{w:"uncanny",g:7},{w:"communing",g:7},{w:"deadpan",g:7},
+        // Grade 8
+        {w:"arable",g:8},{w:"surfactant",g:8},{w:"nitrogen",g:8},{w:"paralysis",g:8},{w:"metronome",g:8},
+        {w:"attorney",g:8},{w:"snivel",g:8},{w:"contemptible",g:8},{w:"altimeter",g:8},{w:"jugular",g:8},
+        {w:"insolent",g:8},{w:"aura",g:8},{w:"propitious",g:8},{w:"ellipsis",g:8},{w:"thyroid",g:8},
+        {w:"elongated",g:8},{w:"lasso",g:8},{w:"incandescent",g:8},{w:"bureaucrats",g:8},{w:"refuge",g:8},
+        {w:"shoal",g:8},{w:"perpendicularity",g:8},{w:"antechamber",g:8},{w:"jeopardy",g:8},{w:"sauna",g:8},
+        {w:"conciliatory",g:8},{w:"forsook",g:8},{w:"boba",g:8},{w:"animatronics",g:8},{w:"frijoles",g:8},
+        {w:"minimus",g:8},{w:"senescent",g:8},{w:"secreted",g:8},{w:"aspirin",g:8},{w:"aptitude",g:8},
+        {w:"Chicana",g:8},{w:"bilge",g:8},{w:"simultaneously",g:8},{w:"Copenhagen",g:8},{w:"Bunsen burner",g:8},
+        {w:"defoliant",g:8},{w:"aerosol",g:8},{w:"Ramadan",g:8},{w:"photosynthesis",g:8},{w:"malignant",g:8},
+        {w:"matterhorn",g:8},{w:"divot",g:8},{w:"pixels",g:8},{w:"antonyms",g:8},{w:"Trinidadian",g:8}
+    ];
+
+    // --- STATE ---
+    let sessionWords = [];
+    let currentIndex = 0;
+    let wrongAnswers = [];
+    let score = 0;
+    let isReviewMode = false;
+
+    // --- GAME ENGINE ---
+    
+    function startGame(reviewMode = false) {
+        // 1. Logic Setup
+        isReviewMode = reviewMode;
+        currentIndex = 0;
+        score = 0;
+        
+        if (!reviewMode) {
+            wrongAnswers = [];
+            document.getElementById('mode-label').classList.add('hidden');
+            
+            // Standard Start: Filter & Randomize
+            const gradeSelect = document.getElementById('grade-select').value;
+            const countSelect = parseInt(document.getElementById('count-select').value);
+            
+            let pool = WORD_DATA.filter(item => {
+                if (gradeSelect === 'all') return true;
+                return item.g == gradeSelect;
+            });
+
+            // Shuffle
+            pool.sort(() => Math.random() - 0.5);
+            
+            // Limit count
+            sessionWords = pool.slice(0, Math.min(countSelect, pool.length));
+        } else {
+            // Review Start: Use wrong answers X3 (DRILL MODE)
+            document.getElementById('mode-label').classList.remove('hidden');
+            
+            let tripleMistakes = [];
+            // Duplicate the mistakes 3 times for drill
+            tripleMistakes = tripleMistakes.concat(wrongAnswers);
+            tripleMistakes = tripleMistakes.concat(wrongAnswers);
+            tripleMistakes = tripleMistakes.concat(wrongAnswers);
+
+            sessionWords = tripleMistakes;
+            sessionWords.sort(() => Math.random() - 0.5); // Shuffle the drill set
+            
+            wrongAnswers = []; // Reset tracking for this round
+        }
+
+        // 2. UI Setup
+        document.getElementById('final-total').innerText = sessionWords.length;
+        setupProgressGrid();
+        
+        switchScreen('game-screen');
+        setTimeout(() => loadWord(), 500);
+    }
+
+    function setupProgressGrid() {
+        const grid = document.getElementById('progress-grid');
+        grid.innerHTML = '';
+        sessionWords.forEach((_, index) => {
+            const block = document.createElement('div');
+            block.className = 'prog-block';
+            block.id = `block-${index}`;
+            grid.appendChild(block);
+        });
+    }
+
+    function loadWord() {
+        const currentObj = sessionWords[currentIndex];
+        document.getElementById('current-count').innerText = currentIndex + 1;
+        document.getElementById('grade-badge').innerText = "Grade " + currentObj.g;
+        document.getElementById('user-input').value = '';
+        document.getElementById('status-msg').innerText = '';
+        
+        // Highlight active block
+        updateBlockStatus(currentIndex, 'active');
+        
+        document.getElementById('user-input').focus();
+        speakCurrentWord();
+    }
+
+    function updateBlockStatus(index, status) {
+        const block = document.getElementById(`block-${index}`);
+        if(block) {
+            // Remove previous statuses
+            block.classList.remove('active', 'correct', 'wrong');
+            block.classList.add(status);
+        }
+    }
+
+    // --- AUDIO FUNCTIONS ---
+    
+    function speak(text) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        u.rate = 0.9;
+        window.speechSynthesis.speak(u);
+    }
+
+    function speakCurrentWord() {
+        speak(sessionWords[currentIndex].w);
+    }
+
+    async function fetchAndSpeakDefinition() {
+        const word = sessionWords[currentIndex].w;
+        const status = document.getElementById('status-msg');
+        
+        status.innerText = "Fetching definition...";
+        speak("Fetching definition..."); // Auditory feedback
+
+        try {
+            // Using Free Dictionary API
+            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+            if (!response.ok) throw new Error("Not found");
+            
+            const data = await response.json();
+            
+            // Extract first definition
+            if(data && data[0] && data[0].meanings && data[0].meanings[0]) {
+                const def = data[0].meanings[0].definitions[0].definition;
+                status.innerText = "Playing definition...";
+                speak(`Definition: ${def}`);
+            } else {
+                throw new Error("No definition found");
+            }
+        } catch (e) {
+            status.innerText = "Definition unavailable.";
+            speak("Sorry, definition unavailable for this word.");
+        }
+    }
+
+    function submitWord() {
+        const input = document.getElementById('user-input').value.trim();
+        const targetObj = sessionWords[currentIndex];
+        const targetWord = targetObj.w;
+
+        if (input.toLowerCase() === targetWord.toLowerCase()) {
+            score++;
+            updateBlockStatus(currentIndex, 'correct');
+        } else {
+            // Track the mistake
+            // In Drill Mode, we still track mistakes if they get it wrong again!
+            wrongAnswers.push(targetObj);
+            updateBlockStatus(currentIndex, 'wrong');
+        }
+
+        currentIndex++;
+
+        if (currentIndex < sessionWords.length) {
+            loadWord();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('final-total').innerText = sessionWords.length;
+        
+        const list = document.getElementById('mistake-list');
+        list.innerHTML = '';
+        
+        const mistakeArea = document.getElementById('mistake-area');
+        const perfectMsg = document.getElementById('perfect-message');
+
+        if (wrongAnswers.length === 0) {
+            mistakeArea.classList.add('hidden');
+            perfectMsg.classList.remove('hidden');
+        } else {
+            perfectMsg.classList.add('hidden');
+            mistakeArea.classList.remove('hidden');
+            
+            // Deduplicate for the list display only (so it doesn't look messy)
+            const uniqueMistakes = [...new Map(wrongAnswers.map(item => [item.w, item])).values()];
+
+            uniqueMistakes.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'result-item';
+                li.innerHTML = `
+                    <span style="font-weight:bold; color:var(--error);">${item.w}</span>
+                    <span class="badge">Gr ${item.g}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        switchScreen('result-screen');
+    }
+
+    function startReviewMode() {
+        startGame(true);
+    }
+
+    function resetGame() {
+        switchScreen('start-screen');
+    }
+
+    function switchScreen(id) {
+        document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+    
+    // Enter key support
+    document.getElementById('user-input').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            submitWord();
+        }
+    });
+
+</script>
+
+</body>
+</html>
